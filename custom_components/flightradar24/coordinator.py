@@ -5,7 +5,6 @@ from datetime import timedelta
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.device_registry import DeviceInfo
-from pycountry import countries
 from .const import (
     DOMAIN,
     URL,
@@ -21,6 +20,12 @@ from .const import (
 from logging import Logger
 from FlightRadar24 import FlightRadar24API, Flight, Entity
 
+try:
+    from pycountry import countries
+    PYCOUNTRY_AVAILABLE = True
+except ImportError:
+    PYCOUNTRY_AVAILABLE = False
+    countries = None
 
 class SensorType(Enum):
     TRACKED = 1
@@ -319,6 +324,9 @@ class FlightRadar24Coordinator(DataUpdateCoordinator[int]):
 
         async def _get_country_code(code: None | str) -> None | str:
             if code is None or len(code) == 2:
+                return code
+
+            if not PYCOUNTRY_AVAILABLE or countries is None:
                 return code
 
             def _get_code(c: str):
